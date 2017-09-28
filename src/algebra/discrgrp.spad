@@ -143,6 +143,13 @@ CyclicGroup(n: PositiveInteger, g: Symbol) : Exports == Implementation where
 
     generators() : List % == [generator()]
 
+
+
+
+
+
+
+
 )abbrev domain INFCG InfiniteCyclicGroup
 ++ Author: Franz Lehner
 ++ Date Created: 30.12.2014
@@ -293,3 +300,268 @@ DihedralGroup(n: PositiveInteger, a: Symbol, b: Symbol):Exports == Implementatio
 
     enumerate() : List % ==
         concat([per [k::EXPA, 0] for k in 0@Integer..n::Integer-1], [per [k::EXPA, 1] for k in 0@Integer..n::Integer-1])
+
+
+)abbrev domain CUBEGRP CubeGroup
+++ Author: Johannes Grabmeier
+++ Date Created: 2016-09-01
+++ Date Last Updated:  2017-09-28
+++ Basic Functions:
+++ Related Constructors:
+++ Also See:
+++ AMS Classifications:
+++ Keywords:
+++ References:
+++ Description:
+++ A domain for the cube group, i.e. all rotations and reflections, which 
+++     fix the set {-1,0,1}^3
+++   internal representation: as maps from [x1,x2,x3]  to [x1',x2',x3']  represented
+++   by [p1,p2,p3,s1,s2,s3] where pi in {1,2,3} -- pi gives new position of xi
+++   and si gives new sign of xi.
+++   For convenience there are different output forms, standard is "xyz", where
+++   the output is [x1',x2',x3'], while for "ps" we get a permutation of
+++   the symmetric group on 1,2,3 and a list of signs. Both are output for
+++   setOutputType("xyz-ps").
+CubeGroup() : Exports == Implementation where
+  Exports ==> Join(FiniteGroup, FinitelyGenerated, Comparable, RetractableFrom Vector Integer) with
+    internalRepresentation: % -> Vector Integer
+      ++ internalRepresentation yields integer vector of length 6, the first 3 form a permutation
+      ++ of the coordinates, the second 3 give the signs, e.g. if [x,y,z] is mapped to [-z,-y,x], 
+      ++ then this element is internally represented by [3,2,1,1,-1,-1].
+    construct: List Integer -> %
+      ++ construct [p1,p2,p3,s1,s2,s3] checks whether internal representation conditions are satisfied
+      ++ alternatively, we allow also [s1*p1,s2*p2,s3*p3] as valid input.
+    axisRotation3: () -> %
+      ++ axisRotation3() fixes the z-axis and is of order 4
+    axisRotation2: () -> %
+      ++ axisRotation2() fixes the y-axis and is of order 4
+    axisRotation1: () -> %
+      ++ axisRotation3() fixes the z-axis and is of order 4
+    axisRotationGenerators: () -> List %
+      ++ axisRotationGenerators() lists 3 generators of axis rotations, all of order 4
+    spaceDiagonalRotation_111: () -> %
+      ++ spaceDiagonalRotation_111() fixes [1,1,1] and [-1,-1,-1] and is of order 3.
+    spaceDiagonalRotation_m11: () -> %
+      ++ spaceDiagonalRotation_m11() fixes [-1,1,1] and [1,-1,-1] and is of order 3.
+    spaceDiagonalRotation_1m1: () -> %
+      ++ spaceDiagonalRotation_1m1() fixes [1,-1,1] and [-1,1,-1] and is of order 3.
+    spaceDiagonalRotation_11m: () -> %
+      ++ spaceDiagonalRotation_11m() fixes [1,1,-1] and [-1,-1,1] and is of order 3.
+    spaceDiagonalRotationGenerators: () -> List %
+      ++ spaceDiagonalRotationGenerators lists 4 generators of axis rotations, all of order 3
+    midPointRotation_1e: () -> %
+      ++ midPointRotation_1e() fixes [0,1,1] and [0,-1,-1] and is of order 2.
+    midPointRotation_1a: () -> %
+      ++ midPointRotation_1a() fixes [0,1,-1] and [0,-1,1] and is of order 2.
+    midPointRotation_2e: () -> %
+      ++ midPointRotation_2e() fixes [1,0,1] and [-1,0,-1] and is of order 2.
+    midPointRotation_2a: () -> %
+      ++ midPointRotation_2a() fixes [1,0,-1] and [-1,0,1] and is of order 2.
+    midPointRotation_3e: () -> %
+      ++ midPointRotation_3e() fixes [1,1,0] and [-1,-1,0] and is of order 2.
+    midPointRotation_3a: () -> %
+      ++ midPointRotation_3a() fixes [1,-1,0] and [-1,1,0] and is of order 2.
+    midPointRotationGenerators: () -> List %
+      ++ midPointRotationGenerators lists the 6 generators of mid point rotations, all of order 2
+    pointReflection: () -> %
+      ++ pointReflection() reflects all points w.r.to 0, order 2.
+    orientation? : % -> Boolean
+      ++ orientation? g returns true, if g keeps the orientation of the standard basis of three dimensional space.
+    _*: (%, Vector Integer) ->  Vector Integer
+      ++ g*v acts on vectors of length 3
+    setOutputType: String  ->  String
+      ++ setOutputType sets the output type. Default is "xyz", which represents
+      ++ the map (x,y,z) +-> (e.g.) (-z,y,-x)
+      ++ An alternative is "ps", where "p" stands for permutation, and "s" for sign.
+  Implementation ==> add
+
+    -- representation
+    Rep := Vector Integer
+    rep(g:%) : Rep == g :: Rep
+    per(r:Rep) : % == r :: %
+
+    -- internal constants
+
+    lO : List OutputForm := [outputForm ("x" :: Symbol), outputForm ("y" :: Symbol), 
+	outputForm ("z" :: Symbol)]
+    lS : List String := ["x","y","z"] 
+    r3    : % := per [2,1,3,-1,1,1]
+    r2    : % := per [3,2,1,-1,1,1]
+    r1    : % := per [1,3,2,1,-1,1]
+    r_111 : % := per [2,3,1,1,1,1]
+    r_1m1 : % := per [2,3,1,-1,-1,1]
+    r_m11 : % := per [2,3,1,-1,1,-1]
+    r_11m : % := per [2,3,1,1,-1,-1]
+    m_1e  : % := per [1,3,2,1,1,1]
+    m_1a  : % := per [1,3,2,1,-1,-1]
+    m_2e  : % := per [3,2,1,1,1,1]
+    m_2a  : % := per [3,2,1,-1,1,-1]
+    m_3e  : % := per [2,1,3,1,1,1]
+    m_3a  : % := per [2,1,3,-1,-1,1]
+    pR    : % := per [1,2,3,-1,-1,-1]
+
+    allElements : List % := concat [[1], concat [[r^i for i in 1..3] for r in axisRotationGenerators() ]]
+    allElements := concat [allElements, concat [[r^i for i in 1..2] for r in spaceDiagonalRotationGenerators() ]]
+    allElements := concat [allElements, [pR*r for r in midPointRotationGenerators()]]
+    allElements := concat [allElements, [pR*r for r in allElements]]
+
+    outputType : Reference String := ref "xyz"
+
+    -- internal functions
+
+    toPermutationSigns(g: %): OutputForm == 
+        signO : List OutputForm := new(3,""::OutputForm)
+        signO.1 := rep(g).4 :: OutputForm
+        signO.2 := rep(g).5 :: OutputForm
+        signO.3 := rep(g).6 :: OutputForm
+	permO : OutputForm := coerceImages(first(entries rep g, 3))$Permutation(Integer) :: OutputForm
+        return bracket [permO, bracket signO]
+    toXYZ(g: %): OutputForm == 
+        one? g => return coerce(1@Integer)$Integer
+        gO : List OutputForm := new(3,""::OutputForm)
+        gO.1 := lO.(rep(g).1)
+        gO.2 := lO.(rep(g).2)
+        gO.3 := lO.(rep(g).3)
+        if rep(g).4 = -1 then gO.1 := -gO.1
+        if rep(g).5 = -1 then gO.2 := -gO.2
+        if rep(g).6 = -1 then gO.3 := -gO.3
+        bracket gO      
+    -- SetCategory
+    _=(g:%, h:%) : Boolean == (rep g =$Rep rep h)
+
+    coerce(g: %) : OutputForm ==
+      deref outputType  = "ps" => toPermutationSigns(g)
+      deref outputType  = "xyz" => toXYZ(g)
+      deref outputType  = "xyz-ps" => blankSeparate [toXYZ(g), message("~"), toPermutationSigns(g)]
+      toXYZ(g)
+
+    -- to be implemented properly:
+    hashUpdate!(hs, s) == 
+        h : SingleInteger := 0
+	update!(hs, 0)$HashState --rep(s).1 pretend SingleInteger)$HashState
+
+    latex(g: %): String == 
+      one? g => "1"
+      gO : List String := ["[", ",", ",", "", "]"]
+      gO.2 := concat(lS.(rep(g).1), gO.2)
+      gO.3 := concat(lS.(rep(g).2), gO.3)
+      gO.4 := concat(lS.(rep(g).3), gO.4)
+      if rep(g).4 = -1 then gO.2 := concat("-",gO.2)
+      if rep(g).5 = -1 then gO.3 := concat("-",gO.3)
+      if rep(g).6 = -1 then gO.4 := concat("-",gO.4)
+      concat gO
+   -- ConvertibleTo InputForm
+   -- convert(g: %): InputForm == 
+
+    -- Group 
+
+    1: % == per( [1,2,3,1,1,1]$Rep)
+    one?(g: %) : Boolean == 
+      rg : Rep := rep g
+      rg.1 = 1 and rg.2 = 2 and rg.3 = 3 and rg.4 = 1 and rg.5 = 1 and rg.6 = 1
+    _*(g:%, h:%) : % == 
+	rg : Rep := rep g
+	rh : Rep := rep h
+        per [rh.(rg.1), rh.(rg.2), rh.(rg.3), rh.(3+rg.1)*rg.4, rh.(3+rg.2)*rg.5, rh.(3+rg.3)*rg.6]
+    inv(g: %) : % ==
+        one? g => 1
+	rg : Rep := rep g
+        per vector [position(1, rg), position(2, rg), position(3, rg),
+		rg(3+position(1, rg)), rg(3+position(2, rg)), rg(3+position(3, rg))]
+
+    -- Finite = Join(SetCategory, ConvertibleTo InputForm):
+
+    size() : NonNegativeInteger == 48
+    index(i: PositiveInteger): % == allElements.i
+    lookup(g: %): PositiveInteger == position(g, allElements)$List(%) :: PositiveInteger
+    enumerate(): List % == allElements
+
+    -- FinitelyGenerated:
+
+    generators() : List % == [axisRotation1, midPointRotation_1e, pointReflection]
+
+    -- Comparable
+ 
+    smaller?(g: %, h: %): Boolean == lookup(g) < lookup(h)
+
+    -- RetractableFrom Vector Integer:
+
+    coerce(g: %): Vector Integer == rep g
+    retractIfCan(v: Vector Integer): Union(%,"failed") == 
+      not (#v = 6)                     => "failed" 
+      v.1 > 3 or v.2 > 3 or v.3 > 3    => "failed" 
+      v.1 < 1 or v.2 < 1 or v.3 < 1    => "failed"
+      v.4 > 1 or v.5 > 1 or v.6 > 1    => "failed"
+      v.4 < -1 or v.5 < -1 or v.6 < -1 => "failed"
+      v.4 = 0 or v.5 = 0 or v.6 = 0    => "failed"
+      per v
+
+    -- %:
+ 
+    internalRepresentation(g: %): Vector Integer == rep g
+    construct(l: List Integer): % ==
+      not (#l = 6) and not (#l=3)  => error "construct: argument must be a list of 3 or of 6 integers"
+      l.1 > 3 or l.2 > 3 or l.3 > 3 => error "construct: one of the first 3 components > 3"
+      #l = 3 =>
+        l.1 < -3 or l.2 < -3 or l.3 < - 3 => error "construct: one of the first 3 components < -3"
+        (not (abs(l.1)+abs(l.2)+abs(l.3) = 6))  => error "construct: the first 3 entries are not a permutation of [1,2,3] - neglecting signs"
+	il : List Integer := concat(copy l, [1, 1, 1])
+        if abs(l.1) ~= l.1 then 
+	  il.1 := -il.1
+	  il.4 := -1
+        if abs(l.2) ~= l.2 then 
+	  il.2 := -il.2
+	  il.5 := -1
+        if abs(l.3) ~= l.3 then 
+	  il.3 := -il.3
+	  il.6 := -1
+	return per vector il
+      l.1 < 1 or l.2 < 1 or l.3 < 1 => error "construct: one of the first 3 components < 1"
+      (not (l.1+l.2+l.3 = 6))  => error "construct: the first 3 entries are not a permutation of [1,2,3]"
+      l.4 > 1 or l.5 > 1 or l.6 > 1 => error "construct: one of the last 3 components > 1"
+      l.4 < -1 or l.5 < -1 or l.6 < -1 => error "construct: one of the last 3 components < -1"
+      l.4 = 0 or l.5 = 0 or l.6 = 0 => error "construct: one of the last 3 components = 0"
+      per vector l
+    midPointRotation_1e(): % == m_1e
+    midPointRotation_1a(): % == m_1a
+    midPointRotation_2e(): % == m_3e
+    midPointRotation_2a(): % == m_3a
+    midPointRotation_3e(): % == m_3e
+    midPointRotation_3a(): % == m_3a
+    midPointRotationGenerators(): List % == [m_1e, m_1a, m_2e, m_2a, m_3e, m_3a]
+    axisRotation3(): % == r3
+    axisRotation2(): % == r2
+    axisRotation1(): % == r1
+    axisRotationGenerators(): List % == [r1,r2,r3]
+    spaceDiagonalRotation_111(): % == r_111
+    spaceDiagonalRotation_m11(): % == r_m11
+    spaceDiagonalRotation_1m1(): % == r_1m1
+    spaceDiagonalRotation_11m(): % == r_11m
+    spaceDiagonalRotationGenerators(): List % == [r_111, r_m11, r_1m1, r_11m]
+    pointReflection(): % == pR
+
+    orientation?(g: %): Boolean ==
+      pg : List Integer := first(entries rep g, 3)
+      sg : List Integer := last(entries rep g, 3)
+      pg = [1,2,3] or pg = [2,3,1] or pg =  [3,1,2]  =>
+        sg = [1,1,1] or sg = [1,-1,-1] or sg = [-1,1,-1] or sg = [-1,-1,1]  => true
+	false
+      sg = [-1,-1,-1] or sg = [1,1,-1] or sg = [1,-1,1] or sg = [-1,1,1]  => true
+      false
+
+    _*(g:%, v: Vector Integer): Vector Integer  == 
+	rg : Rep := rep g
+	vector [rg.4 * v.(rg.1), rg.5 * v.(rg.2), rg.6 * v.(rg.3)]
+
+    --convert(x:%) : SExpression ==
+    --    convert(rep x)$SExpression
+
+    setOutputType(st: String): String ==
+      correctType? : Boolean := false
+      correctType? := correctType?  or (st = "xyz") or (st = "ps") or (st= "xyz-ps")
+      if correctType?
+        then outputType := ref st
+        else
+          msg1 : String := "Improper value, correct values are  'xyz', 'ps', 'xyz-ps'."
+          messagePrint(msg1)$OutputForm
+      st

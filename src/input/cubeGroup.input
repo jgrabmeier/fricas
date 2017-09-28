@@ -1,0 +1,19 @@
+C := CubeGroup()
+lC := enumerate()$C
+map(order, lC)
+map(orientation?, lC)
+a := random()$C
+setOutputType("ps")$C
+a
+setOutputType("xyz")$C
+a
+setOutputType("xyz-ps")$C
+a
+b : C := axisRotation3()
+a
+a*b
+inv a
+setOutputType("xyz")$C
+[inv(g)*g for g in lC]
+-- associativity
+[[[(u*v)*w * inv(u*(v*w)) for w in lC] for v in lC] for u in lC]
